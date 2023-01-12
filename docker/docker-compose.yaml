@@ -1,0 +1,14 @@
+version: "3.7"
+# docker run -it --device /dev/kvm -e EXTRA="-display none -vnc 0.0.0.0:99,password=off"  -p 5999:5999 android-x86:latest
+# The docker file to build is on the same dir
+
+services:
+  android-x86:
+    container_name: android-x86
+    build: .
+    devices:
+      - /dev/kvm
+    environment:
+      - "EXTRA=-display none -vnc 0.0.0.0:99,password=off"
+    ports:
+      - "5999:5999"
