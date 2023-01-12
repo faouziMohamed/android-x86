@@ -16,7 +16,7 @@
 # 
 # Build:
 #
-#       docker build -t dock-droid .
+#       docker build -t android-x86 .
 #
 
 FROM archlinux:base-devel
@@ -103,7 +103,9 @@ WORKDIR /home/arch
 # optional --build-arg to change branches for testing
 ARG BRANCH=master
 ARG REPO='https://github.com/sickcodes/dock-droid.git'
-RUN git clone --recurse-submodules --depth 1 --branch "${BRANCH}" "${REPO}"
+RUN git clone --recurse-submodules --depth 1 --branch "${BRANCH}" "${REPO}" \
+    && cd dock-droid \
+    && rm -rf .git 
 
 WORKDIR /home/arch/dock-droid
 
@@ -115,20 +117,15 @@ RUN touch ./enable-ssh.sh \
     && tee -a enable-ssh.sh <<< 'sudo /usr/bin/ssh-keygen -A' \
     && tee -a enable-ssh.sh <<< 'nohup sudo /usr/bin/sshd -D &'
 
-RUN  yes y | sudo pacman -Syu jack2  qemu-base virglrenderer libvirt dnsmasq virt-manager bridge-utils openresolv ebtables edk2-ovmf netctl libvirt-dbus wget --overwrite --noconfirm \
+RUN  yes y | sudo pacman -Syu jack2  qemu-base virglrenderer libvirt dnsmasq \
+             virt-manager bridge-utils openresolv ebtables edk2-ovmf netctl \
+             libvirt-dbus wget --overwrite --noconfirm \
     && yes | sudo pacman -Scc
 
 ARG LINUX=true
-
-# # required to use libguestfs inside a docker container, to create bootdisks for docker-osx on-the-fly
-# RUN if [[ "${LINUX}" == true ]]; then \
-#         sudo pacman -Syu linux libguestfs --overwrite --noconfirm \
-#     ; fi
-
 ARG COMPLETE=true
 
 ARG CDROM_IMAGE_URL=https://kumisystems.dl.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2-k49.iso
-# ARG CDROM_IMAGE_URL="https://download.fosshub.com/Protected/expiretime=1673483231;badurl=aHR0cHM6Ly93d3cuZm9zc2h1Yi5jb20vQW5kcm9pZC14ODYuaHRtbA==/1f63476fffcc1bfa8d28f13cb3ed690845e4fbf8b5cf997d43b1db981f25708c/5b8fb9cc59eee027c3d78baf/5e7b309a84fe8e0d1d2be1d5/android-x86_64-9.0-r2-k49.iso"
 # ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-x86/files/Official/bleeding_edge/Generic%20builds%20-%20Pie/11.13/Bliss-v11.13--OFFICIAL-20201113-1525_x86_64_k-k4.19.122-ax86-ga-rmi_m-20.1.0-llvm90_dgc-t3_gms_intelhd.iso
 # ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-dev/files/Android-Generic/PC/bliss/R/gapps/BlissOS-14.3-x86_64-202106261907_k-android12-5.10.46-ax86_m-21.1.3_r-x86_emugapps_cros-hd.iso
 # ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-dev/files/Android-Generic/PC/bliss/R/gapps/BlissOS-14.3-x86_64-202106181339_k-google-5.4.112-lts-ax86_m-r_emugapps_cros-hd_gearlock.iso
@@ -152,27 +149,7 @@ RUN qemu-img create -f qcow2 /home/arch/dock-droid/android.qcow2 "${QCOW_SIZE}"
 # RUN [[ -z "${VDI}" ]] && qemu-img convert -f vdi -O qcow2 "${VDI}" android.qcow2
 # RUN [[ -z "${ISO}" ]] && -cdrom \
 
-#### Mount disk inside container
-
-# sudo modprobe nbd \
-# sudo qemu-nbd --connect=/dev/nbd0 android2.qcow2 -f qcow2 \
-# sudo fdisk /dev/nbd0 -l\
-# mkdir /tmp/image /tmp/system
-# sudo mount /dev/nbd0p1 /tmp/image
-
-# sudo mount /tmp/image/bliss-x86-11.13/system.img /tmp/system
-# sudo tee -a /tmp/system/build.prop <<< 'ro.adb.secure=0'
-# sudo umount /tmp/system
-# sudo umount /tmp/image
-# sudo qemu-nbd -d /dev/nbd0
-
-# RUN wget -O supergrub2.iso https://telkomuniversity.dl.sourceforge.net/project/supergrub2/2.04s2-beta2/super_grub2_disk_2.04s2-beta2/supergrub2-2.04s2-beta2-multiarch-CD.iso
-
 RUN wget -O  supergrub2.iso https://master.dl.sourceforge.net/project/supergrub2/2.04s2-beta2/super_grub2_disk_2.04s2-beta2/supergrub2-2.04s2-beta2-multiarch-CD.iso?viasf=1
-
-# RUN sudo guestfish -a /home/user/bliss/android2.qcow2 \  
-
-# sudo guestmount -a android.qcow2 -m /dev/vg0 /mnt
 
 #### SPECIAL RUNTIME ARGUMENTS BELOW
 

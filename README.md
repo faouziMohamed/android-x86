@@ -1,10 +1,7 @@
-# Dock-Droid · [Follow @sickcodes on Twitter](https://twitter.com/sickcodes)
-
-![Running Android x86 & Android ARM in a Docker container](/dock-droid-docker-android.png?raw=true "ANDROID KVM IN DOCKER CONTAINER")
-
 Docker Android - Run QEMU Android x86 and Android ARM in a Docker! X11 Forwarding! CI/CD for Android!
 
 ## Capabilities
+
 - Security Research of ARM apps on x86!
 - ADB on port `:5555`
 - Magisk, riru, LSPosed on Android x86
@@ -24,27 +21,6 @@ This project is maintained by @sickcodes [Sick.Codes](https://sick.codes/). [(Tw
 
 Additional credits can be found here: https://github.com/sickcodes/dock-droid/blob/master/CREDITS.md
 
-Epic thanks to [@BlissRoms](https://github.com/BlissRoms) who maintain absolutely incredible Android x86 images. If you love their images, consider donating to the project: [https://blissos.org/](https://blissos.org/)!
-
-Special thanks to [@zhouziyang](https://github.com/zhouziyang) who maintains an even more native fork [Redroid](https://github.com/remote-android/redroid-doc)!
-
-This project is heavily based on Docker-OSX: https://github.com/sickcodes/Docker-OSX
-
-<a href="https://hub.docker.com/r/sickcodes/dock-droid"><img src="https://dockeri.co/image/sickcodes/dock-droid"/></a>
-
-### Related:
-- Next Generation Anbox Style LXC:
-
-[https://github.com/sickcodes/droid-native](https://github.com/sickcodes/droid-native)
-
-- Android in a Docker using [BlissOS](https://blissos.org/):
-
-[https://github.com/sickcodes/dock-droid](https://github.com/sickcodes/dock-droid)
-
-- binder(fs) and ashmem for use in anbox related 5.7+ Kernel distribuitons (soon to be all):
-
-[https://github.com/sickcodes/anbox-modules-dkms](https://github.com/sickcodes/anbox-modules-dkms)
-
 ### Requirements
 
 - 4GB disk space for bare minimum installation
@@ -52,6 +28,7 @@ This project is heavily based on Docker-OSX: https://github.com/sickcodes/Docker
 - a kvm-capable host (not required, but slow otherwise)
 
 ## Initial setup
+
 Before you do anything else, you will need to turn on hardware virtualization in your BIOS. Precisely how will depend on your particular machine (and BIOS), but it should be straightforward.
 
 Then, you'll need QEMU and some other dependencies on your host:
@@ -105,6 +82,7 @@ docker run -it \
     -p 5999:5999 \
     sickcodes/dock-droid:latest
 ```
+
 For headless, in the QEMU console, type `change vnc password user`
 
 And then connect on `localhost:5999`, or the server IP, or Docker IP.
@@ -124,12 +102,12 @@ docker run -it \
 
 ### Run without KVM (Work in Progress)
 
-This will boot, but currently does not "work". 
+This will boot, but currently does not "work".
 
 Change `CPU` to `Penryn`, which is normally `host`
 
 Change `ENABLE_KVM`, which is normally `-enable-kvm`
-    
+
 Change `KVM`, which is normally `accel=kvm:tcg`
 
 Change `CPUID_FLAGS`, which is normally very long.
@@ -177,6 +155,7 @@ Find the `hostbus` and `hostaddr`:
 ```console
 Bus 003 Device 003: ID 13d3:56a2 IMC Networks USB2.0 HD UVC WebCam
 ```
+
 Would be `-device usb-host,hostbus=3,hostaddr=3`
 
 ### Passthrough Android Camera over USB
@@ -202,6 +181,7 @@ Vendor ID is `13d3`
 Product ID is `56a2`
 
 In one Terminal on host:
+
 ```bash
 sudo usbredirserver -p 7700 13d3:56a2
 ```
@@ -246,7 +226,7 @@ docker run -it \
 
 ```bash
 
-# get container name from 
+# get container name from
 docker ps -a
 
 # copy out the image
@@ -256,6 +236,7 @@ docker cp container_name:/home/arch/dock-droid/android.qcow2 .
 Use any generic ISO or use your own Android AOSP raw image or qcow2
 
 Where, `"${PWD}/disk.qcow2"` is your image in the host system.
+
 ```bash
 docker run -it \
     -v "${PWD}/android.qcow2:/home/arch/dock-droid/android.qcow2" \
@@ -277,6 +258,7 @@ Add the following: `-bios /usr/share/OVMF/x64/OVMF.fd \` to Launch.sh
 Or as a `docker run` argument:
 
 UEFI Boot
+
 ```bash
 docker run -it \
     --device /dev/kvm \
@@ -310,6 +292,7 @@ docker build \
     -e CDROM=/cdrom \
 
 ```
+
 For example:
 
 ```bash
@@ -326,7 +309,6 @@ docker run -it \
     sickcodes/dock-droid:latest
 ```
 
-
 ### Force Boot CDROM QEMU
 
 `-boot d ` will force QEMU to boot from the CDROM.
@@ -336,6 +318,7 @@ docker run -it \
 ### Naked Container
 
 Reduces the image size by 600Mb if you are using a local directory disk image:
+
 ```
 docker cp  image_name /home/arch/dock-droid/android.qcow2 .
 ```
@@ -367,8 +350,9 @@ sudo mount /dev/nbd0p1 /tmp/image
 ```
 
 Now you can mount the internal disks in other places...
+
 ```bash
-# make a folder to mount the whole resizable image 
+# make a folder to mount the whole resizable image
 # make another to mount the raw Android image within that resizable image.
 mkdir -p /tmp/system
 sudo mount /tmp/image/bliss-x86-11.13/system.img /tmp/system
@@ -481,7 +465,7 @@ sudo /bin/bash -c "
 cd /tmp/ramdisk
 zcat /tmp/image/bliss-x86-11.13/ramdisk.img | cpio -iud && mv /tmp/ramdisk/init /tmp/ramdisk/init.real
 
-wget -O /tmp/ramdisk/init https://github.com/axonasif/rusty-magisk/releases/download/v0.1.7/rusty-magisk_x86_64 
+wget -O /tmp/ramdisk/init https://github.com/axonasif/rusty-magisk/releases/download/v0.1.7/rusty-magisk_x86_64
 
 chmod a+x /tmp/ramdisk/init
 touch /tmp/image/bliss-x86-11.13/ramdisk.img
@@ -492,7 +476,6 @@ sudo rm -rf /tmp/ramdisk
 ```
 
 During the next boot you will have Magisk installed.
-
 
 ### Add secure ADB keys.
 
@@ -524,6 +507,7 @@ sudo qemu-nbd -d /dev/nbd0
 ```
 
 # Use Frida (latest)
+
 ```bash
 # choose a version from https://github.com/frida/frida/releases/
 # use arm if you're debugging arm apps, via houdini or native bridge (ndk)
@@ -612,8 +596,6 @@ Then from the host, you can can connect using either:
 
 `adb connect 172.17.0.2:5555`
 
-
-
 ### Professional support
 
 For more sophisticated endeavours, we offer the following support services:
@@ -638,7 +620,6 @@ This is a Dockerized Android setup/tutorial for conducting Android Security Rese
 
 Product names, logos, brands and other trademarks referred to within this project are the property of their respective trademark holders. These trademark holders are not affiliated with our repository in any capacity. They do not sponsor or endorse this project in any way.
 
-
 ### Other cool Docker/QEMU based projects
 
 - [Run macOS in a Docker container with Docker-OSX](https://github.com/sickcodes/Docker-OSX) - [https://github.com/sickcodes/Docker-OSX](https://github.com/sickcodes/Docker-OSX)
@@ -660,27 +641,26 @@ Using `Bus` and `Device` as `hostbus` and `hostaddr`, include the following dock
 
 ## VFIO Passthrough
 
-*Waiting for public `mesa` builds: https://blissos.org/*
+_Waiting for public `mesa` builds: https://blissos.org/_
 
 When these hardware accelerated images are released, you can follow the Issue opened by: [@M1cha](https://github.com/M1cha)
 
 See [https://github.com/sickcodes/dock-droid/issues/2](https://github.com/sickcodes/dock-droid/issues/2)
 
 > the online documentation for that is very bad and mostly outdated(due to kernel and qemu updates). But here's some references that helped me set it up several times:
-> 
-[https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF#Plain_QEMU_without_libvirt](https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF#Plain_QEMU_without_libvirt)
-> 
-[https://www.kernel.org/doc/Documentation/vfio.txt](https://www.kernel.org/doc/Documentation/vfio.txt)
-> 
-> 
+>
+> [https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF#Plain_QEMU_without_libvirt](https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF#Plain_QEMU_without_libvirt)
+>
+> [https://www.kernel.org/doc/Documentation/vfio.txt](https://www.kernel.org/doc/Documentation/vfio.txt)
+>
 > the general summary:
-> 
+>
 >     * make sure your hardware supports VT-d/AMD-VI and UEFI and linux have it enabled
-> 
+>
 >     * figure out which devices are in the same iommu group
-> 
+>
 >     * detach all drivers from those devices
-> 
+>
 >     * attach vfio-pci to those devices
 
 Add the following lines when you are ready:
@@ -742,9 +722,7 @@ docker run -it \
 
 ```
 
-
 ### Convert BlissOS Virtual Box to Dock-Droid
-
 
 ```bash
 qemu-img convert -f vdi -O qcow2 BlissOS.vdi android.qcow2
@@ -772,7 +750,6 @@ Remote VNC over SSH: `ssh -N root@1.1.1.1 -L  5999:172.17.0.2:5999`, where `1.1.
 
 Now you can direct connect VNC to any container built with this command!
 
-
 # BlissOS Image Builder Using Platform Manifests
 
 **This requires 250GB of REAL space.**
@@ -780,6 +757,7 @@ Now you can direct connect VNC to any container built with this command!
 This was previously at `./build`, but due to Docker Hub using the wrong README.md file, I have added these instructions below:
 
 Make and add a non-root user
+
 ```bash
 
 USERADD=user
@@ -821,4 +799,3 @@ docker run -it \
     blissos-builder
 
 ```
-
