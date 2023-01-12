@@ -1,0 +1,31 @@
+# Maintainer: Leonidas P. <jpegxguy at outlook dot com>
+# Maintainer: Jerry <isjerryxiao at outlook dot com>
+# Contributor: Anes Belfodil <ans.belfodil at gmail dot com>
+# Contributor: David Rheinsberg <david.rheinsberg at gmail dot com>
+# Contributor: David Herrmann <dh.herrmann at gmail dot com>
+
+_pkgname=qemu-user-static
+_pkgver="7.2"
+# _pkgadditver="+dfsg-1+b2"
+_pkgadditver="+dfsg-1~bpo11+2"
+pkgname=${_pkgname}-bin
+pkgver=${_pkgver//\~/}
+pkgrel=6
+pkgdesc='A generic and open source machine emulator, statically linked'
+arch=('x86_64')
+url="http://wiki.qemu.org"
+license=('GPL2' 'LGPL2.1')
+depends=('binfmt-qemu-static')
+provides=("qemu-user" "${_pkgname}" "qemu-arm-static")
+conflicts=("qemu-user" "${_pkgname}" "qemu-arm-static")
+# qemu-user-static_7.2
+
+# https://deb.debian.org/debian/pool/main/q/qemu/qemu-user-static_7.2+dfsg-1~bpo11+2_amd64.deb
+source_x86_64=("https://deb.debian.org/debian/pool/main/q/qemu/${_pkgname}_${_pkgver}${_pkgadditver}_amd64.deb")
+# source_x86_64=("http://ftp.debian.org/debian/pool/main/q/qemu/qemu-user-static_7.2+dfsg-1+b2_amd64.deb")
+
+sha256sums_x86_64=("433b5aa55679ecf0460ddfdb30c2c46eca24848966c72ff8787e2e90a8f49b4e")
+
+package() {
+        tar -C "${pkgdir}" -xf "${srcdir}/data.tar.xz" --exclude=./usr/share/man/man1/qemu-debootstrap.1.gz ./usr/bin ./usr/share/man
+}

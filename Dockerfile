@@ -21,7 +21,7 @@
 
 FROM archlinux:base-devel
 
-MAINTAINER 'https://twitter.com/sickcodes' <https://sick.codes>
+LABEL 'https://twitter.com/sickcodes' <https://sick.codes>
 
 SHELL ["/bin/bash", "-c"]
 
@@ -52,7 +52,7 @@ RUN pacman -Syu git zip vim nano alsa-utils openssh unzip usbutils --noconfirm \
     && chown arch:arch /home/arch
 
 # allow ssh to container
-RUN mkdir -m 700 /root/.ssh
+RUN mkdir -pm 700 /root/.ssh
 
 WORKDIR /root/.ssh
 RUN touch authorized_keys \
@@ -69,6 +69,11 @@ RUN tee -a sshd_config <<< 'AllowTcpForwarding yes' \
     && tee -a sshd_config <<< 'HostKey /etc/ssh/ssh_host_ecdsa_key' \
     && tee -a sshd_config <<< 'HostKey /etc/ssh/ssh_host_ed25519_key'
 
+WORKDIR /home/arch
+
+COPY qemu-user-static-bin qemu-user-static-bin
+RUN chmod +rwx qemu-user-static-bin -R
+
 USER arch
 
 ENV USER arch
@@ -84,7 +89,11 @@ RUN git clone https://aur.archlinux.org/binfmt-qemu-static.git \
     && cd binfmt-qemu-static \
     && makepkg -si --nocheck --force --noconfirm || exit 1
 
-RUN git clone https://aur.archlinux.org/qemu-user-static-bin.git \
+# RUN git clone https://aur.archlinux.org/qemu-user-static-bin.git \
+#     && cd qemu-user-static-bin \
+#     && makepkg -si --nocheck --force --noconfirm || exit 1
+# COPY qemu-user-static-bin /tmp/qemu-user-static-bin
+RUN sudo chown arch:arch -R ./qemu-user-static-bin \
     && cd qemu-user-static-bin \
     && makepkg -si --nocheck --force --noconfirm || exit 1
 
@@ -106,7 +115,7 @@ RUN touch ./enable-ssh.sh \
     && tee -a enable-ssh.sh <<< 'sudo /usr/bin/ssh-keygen -A' \
     && tee -a enable-ssh.sh <<< 'nohup sudo /usr/bin/sshd -D &'
 
-RUN yes | sudo pacman -Syu qemu virglrenderer libvirt dnsmasq virt-manager bridge-utils openresolv jack ebtables edk2-ovmf netctl libvirt-dbus wget --overwrite --noconfirm \
+RUN  yes y | sudo pacman -Syu jack2  qemu-base virglrenderer libvirt dnsmasq virt-manager bridge-utils openresolv ebtables edk2-ovmf netctl libvirt-dbus wget --overwrite --noconfirm \
     && yes | sudo pacman -Scc
 
 ARG LINUX=true
@@ -118,7 +127,9 @@ ARG LINUX=true
 
 ARG COMPLETE=true
 
-ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-x86/files/Official/bleeding_edge/Generic%20builds%20-%20Pie/11.13/Bliss-v11.13--OFFICIAL-20201113-1525_x86_64_k-k4.19.122-ax86-ga-rmi_m-20.1.0-llvm90_dgc-t3_gms_intelhd.iso
+ARG CDROM_IMAGE_URL=https://kumisystems.dl.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2-k49.iso
+# ARG CDROM_IMAGE_URL="https://download.fosshub.com/Protected/expiretime=1673483231;badurl=aHR0cHM6Ly93d3cuZm9zc2h1Yi5jb20vQW5kcm9pZC14ODYuaHRtbA==/1f63476fffcc1bfa8d28f13cb3ed690845e4fbf8b5cf997d43b1db981f25708c/5b8fb9cc59eee027c3d78baf/5e7b309a84fe8e0d1d2be1d5/android-x86_64-9.0-r2-k49.iso"
+# ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-x86/files/Official/bleeding_edge/Generic%20builds%20-%20Pie/11.13/Bliss-v11.13--OFFICIAL-20201113-1525_x86_64_k-k4.19.122-ax86-ga-rmi_m-20.1.0-llvm90_dgc-t3_gms_intelhd.iso
 # ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-dev/files/Android-Generic/PC/bliss/R/gapps/BlissOS-14.3-x86_64-202106261907_k-android12-5.10.46-ax86_m-21.1.3_r-x86_emugapps_cros-hd.iso
 # ARG CDROM_IMAGE_URL=https://sourceforge.net/projects/blissos-dev/files/Android-Generic/PC/bliss/R/gapps/BlissOS-14.3-x86_64-202106181339_k-google-5.4.112-lts-ax86_m-r_emugapps_cros-hd_gearlock.iso
 
@@ -155,7 +166,9 @@ RUN qemu-img create -f qcow2 /home/arch/dock-droid/android.qcow2 "${QCOW_SIZE}"
 # sudo umount /tmp/image
 # sudo qemu-nbd -d /dev/nbd0
 
-RUN wget -O supergrub2.iso https://telkomuniversity.dl.sourceforge.net/project/supergrub2/2.04s2-beta2/super_grub2_disk_2.04s2-beta2/supergrub2-2.04s2-beta2-multiarch-CD.iso
+# RUN wget -O supergrub2.iso https://telkomuniversity.dl.sourceforge.net/project/supergrub2/2.04s2-beta2/super_grub2_disk_2.04s2-beta2/supergrub2-2.04s2-beta2-multiarch-CD.iso
+
+RUN wget -O  supergrub2.iso https://master.dl.sourceforge.net/project/supergrub2/2.04s2-beta2/super_grub2_disk_2.04s2-beta2/supergrub2-2.04s2-beta2-multiarch-CD.iso?viasf=1
 
 # RUN sudo guestfish -a /home/user/bliss/android2.qcow2 \  
 
@@ -218,7 +231,8 @@ RUN touch Launch.sh \
     && tee -a Launch.sh <<< '-hda "${IMAGE_PATH:=/home/arch/dock-droid/android.qcow2}" \' \
     && tee -a Launch.sh <<< '-usb -device usb-kbd -device usb-tablet \' \
     && tee -a Launch.sh <<< '-smbios type=2 \' \
-    && tee -a Launch.sh <<< '-audiodev ${AUDIO_DRIVER:-alsa},id=hda -device ich9-intel-hda -device hda-duplex,audiodev=hda \' \
+    # && tee -a Launch.sh <<< '-audiodev ${AUDIO_DRIVER:-alsa},id=hda -device ich9-intel-hda -device hda-duplex,audiodev=hda \' \
+    # && tee -a Launch.sh <<< '-audiodev ${AUDIO_DRIVER:-alsa},id=hda -device ich9-intel-hda -device hda-duplex,audiodev=hda \' \
     && tee -a Launch.sh <<< '-device usb-ehci,id=ehci \' \
     && tee -a Launch.sh <<< '-netdev user,id=net0,hostfwd=tcp::${INTERNAL_SSH_PORT:-10022}-:22,hostfwd=tcp::${SCREEN_SHARE_PORT:-5900}-:5900,hostfwd=tcp::${ADB_PORT:-5555}-:5555,${ADDITIONAL_PORTS} \' \
     && tee -a Launch.sh <<< '-device ${NETWORKING:-vmxnet3},netdev=net0,id=net0,mac=${MAC_ADDRESS:-00:11:22:33:44:55} \' \

@@ -115,9 +115,9 @@ RUN patched_glibc=glibc-linux4-2.33-4-x86_64.pkg.tar.zst \
 # RUN sudo systemctl enable libvirtd.service
 # RUN sudo systemctl enable virtlogd.service
 
-ARG COMPLETE=
+ARG COMPLETE=true
 
-ARG CDROM_IMAGE_URL=
+ARG CDROM_IMAGE_URL="https://download.fosshub.com/Protected/expiretime=1673483231;badurl=aHR0cHM6Ly93d3cuZm9zc2h1Yi5jb20vQW5kcm9pZC14ODYuaHRtbA==/1f63476fffcc1bfa8d28f13cb3ed690845e4fbf8b5cf997d43b1db981f25708c/5b8fb9cc59eee027c3d78baf/5e7b309a84fe8e0d1d2be1d5/android-x86_64-9.0-r2-k49.iso"
 
 ENV CDROM_IMAGE_URL="${CDROM_IMAGE_URL}"
 
