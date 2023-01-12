@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: android-x86
+  name: android-x86
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: android-x86
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: android-x86
+        purpose: android-x86
+    spec:
+      containers:
+        - name: android-x86
+          # image: android-x86:latest
+          image: faouzimohamed/android-x86:latest
+          securityContext:
+            privileged: true
+          env:
+            - name: EXTRA
+              value: -display none -vnc 0.0.0.0:99,password=off
+          ports:
+            - containerPort: 5999
+          resources:
+            limits:
+              memory: "600Mi"
+              cpu: "500m"
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: android-x86
+spec:
+  selector:
+    app: android-x86
+  type: LoadBalancer
+  ports:
+    - port: 5999
+      targetPort: 5999
+status:
+  loadBalancer: {}
