@@ -1,11 +1,10 @@
-# How to deploy the Kubernetes cluster
+# How to deploy the image in a cluster with kubernetes
 
 In this demo we'll use:
 
-- `ns-android-x86` as namespace in kubernetes
 - `android-x86` as service and deployment name
-- `conf-android-x86.yaml` as configMap file
-- `android-x86-deploy-svc.yaml` as config file for deployment and Service
+- `conf-android-x86.yaml` as kubectl config file
+- `android-x86-deploy-svc.yaml` as a deployment and Service config file
 
 ## Prerequisites
 
@@ -16,58 +15,71 @@ In this demo we'll use:
 ## Deploy
 
 ```bash
-# Variables
-NS_NAME=ns-android-x86
-SVC_NAME=android-x86
-CONF_FILE="${HOME}/.kube/conf-android-x86.yaml"
-DEPLOY_FILE=kubernetes/android-x86-deploy-svc.yaml
+  # Assumptions on files and name being used
+  SVC_NAME=android-x86
+  CONF_FILE=${HOME}/.kube/conf-android-x86.yaml
+  DEPLOY_FILE=kubernetes/android-x86-deploy-svc.yaml
 ```
 
-1. - Add the config file in the `~/.kube` directory and rename it to `conf-android-x86.yaml`
+1. Add the config file in the `~/.kube` directory and rename it to `conf-android-x86.yaml`
 
-1. Create a namespace for the cluster for the configMap created in the previous step
+1. Merge the config file with the current one (`~/.kube/config`) if it exists
 
-```bash
-kubectl create namespace $NS_NAME --kubeconfig $CONF_FILE
-kubectl config set-context --current --namespace $NS_NAME --kubeconfig $CONF_FILE
-```
+   ```bash
+     if [ -f ${HOME}/.kube/config ]; then
+         CONTEXT=$(kubectl config view --kubeconfig $CONF_FILE | grep "current-context" | cut -d ":" -f 2 | tr -d " ")
+         echo -e "\e[34mMerging config files...\e[0m"
+         cp ${HOME}/.kube/config ${HOME}/.kube/config.bak
+
+         KUBECONFIG=${HOME}/.kube/config:$CONF_FILE kubectl config view --flatten > /tmp/kubeconfig
+         mv /tmp/kubeconfig ${HOME}/.kube/config
+
+         kubectl config use-context $CONTEXT
+     fi
+   ```
 
 1. Deploy and expose the cluster as a service with the config file
 
-```bash
-kubectl apply -f $DEPLOY_FILE --kubeconfig $CONF_FILE --namespace $NS_NAME
-```
+   ```bash
+     kubectl apply -f $DEPLOY_FILE
+
+     while !(kubectl get svc $SVC_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}') &>/dev/null; do
+         echo "Waiting for the service to be ready..."
+         sleep 5
+     done
+   ```
 
 ## Inspection
 
 ### Check the pods
 
 ```bash
-# Get the pods
-kubectl get pods --kubeconfig $CONF_FILE --namespace $NS_NAME -o wide
+  # Get the pods
+  kubectl get pods -o wide
 ```
 
 ### Check the service and the cluster
 
 ```bash
-# Get the service
-kubectl get svc $SVC_NAME -o wide --kubeconfig $CONF_FILE --namespace $NS_NAME
-echo
-# Get the deployment
-kubectl get deploy $SVC_NAME -o wide --kubeconfig $CONF_FILE --namespace $NS_NAME
+  # Get the service
+  kubectl get svc $SVC_NAME -o wide
+  echo
+  # Get the deployment
+  kubectl get deploy $SVC_NAME -o wide
 ```
 
-1. Get the cluster IP and port
-   Wait until the cluster is ready and get the IP (The node type is `LoadBalancer`)
+### Get the cluster IP and port
+
+Wait until the cluster is ready and get the IP (The node type is `LoadBalancer`)
 
 ```bash
-kubectl get svc -o wide --kubeconfig $CONF_FILE --namespace $NS_NAME
+  kubectl get svc -o wide --kubeconfig $CONF_FILE --namespace $NS_NAME
 
-# Get the ip from the EXTERNAL-IP column
-kubectl get svc $SVC_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}' && echo
+  echo "Cluster IP:"
+  EXTERNAL_IP=$(kubectl get svc $SVC_NAME -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  OPENED_PORT=$(kubectl get svc $SVC_NAME -o jsonpath='{.spec.ports[0].port}')
 
-# Get the port from the PORT(S) column. The expected port is 5999
-kubectl get svc $SVC_NAME -o jsonpath='{.spec.ports[0].port}' && echo
+  echo -e "Service available on VNC client at \e[1;32m${EXTERNAL_IP}:${OPENED_PORT}\e[0m"
 ```
 
 <!-- Create a scipt summarizing the steps above -->
